@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import TemataView from '../views/TemataView.vue'
-import KontaktyView from '../views/KontaktyView.vue'
+import ScenareView from '../views/ScenareView.vue'
 
 const routes = [
   {
@@ -9,16 +8,12 @@ const routes = [
     name: 'home',
     component: HomeView
   },
+
   {
-    path: '/temata/:id?',
-    name: 'temataView',
-    component: TemataView,
-  },
-  {
-    path: '/kontakty/:id?',
-    name: 'kontaktyView',
-    component: KontaktyView,
-  },
+    path: '/scenare/:id?',
+    name: 'scenare',
+    component: ScenareView
+  }
 ]
 
 const router = createRouter({

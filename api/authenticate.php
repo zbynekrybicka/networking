@@ -9,11 +9,11 @@ $user_id = $data->id;
 $code = $data->code;
 $secret = $data->secret ?? false;
 
-$row = $db->select('google_authenticator_key')->from('osoba')->where('id = %u', $user_id)->fetch();
+$row = $db->select('google_authenticator_key')->from('osoby')->where('id = %u', $user_id)->fetch();
 if ($row) {
   $ga = new \PHPGangsta_GoogleAuthenticator();
   if (!$row->google_authenticator_key) {
-    $db->update('osoba', ['google_authenticator_key' => $secret ])->where('id = %u', $user_id)->execute();
+    $db->update('osoby', ['google_authenticator_key' => $secret ])->where('id = %u', $user_id)->execute();
   } else {
     $secret = $row->google_authenticator_key;
   } 

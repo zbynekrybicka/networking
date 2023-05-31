@@ -6,7 +6,7 @@ require_once 'GoogleAuthenticator/PHPGangsta/GoogleAuthenticator.php';
 $email = $data->email;
 $password = $data->password;
 
-$row = $db->select('id, heslo, google_authenticator_key')->from('osoba')->where('email = %s', $email)->fetch();
+$row = $db->select('id, heslo, google_authenticator_key')->from('osoby')->where('email = %s', $email)->fetch();
 
 if (!$row) {
     http_response_code(400);
@@ -20,7 +20,7 @@ if (!$row) {
   } else {
     $ga = new PHPGangsta_GoogleAuthenticator();
     $secret = $ga->createSecret();  
-    $qrCodeUrl = $ga->getQRCodeGoogleUrl('ZbynekRybicka.cz', $secret);
+    $qrCodeUrl = $ga->getQRCodeGoogleUrl('zbynekrybicka-networking_v2', $secret);
     echo json_encode([ 'id' => $row->id, 'qrcode' => $qrCodeUrl, 'secret' => $secret ]);
   }
 }

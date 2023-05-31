@@ -1,8 +1,7 @@
 <template>
   <nav v-if="isLoggedIn">
-    <router-link to="/">Dashboard</router-link> |
-    <router-link to="/temata">Témata</router-link> |
-    <router-link to="/kontakty">Kontakty</router-link> |
+    <router-link to="/">Nástěnka</router-link> |
+    <router-link to="/scenare">Scénáře</router-link> |
     <a href="#" @click.prevent="logout">Odhlásit se</a>
   </nav>
   <div class="container">

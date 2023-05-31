@@ -9,27 +9,21 @@ if (!$userId) {
 } else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CREATE
     $data = [
-        'slajd_id' => $data->slajd_id,
-        'obsah' => $data->obsah,
-        'class_name' => ''
+        'zprava_id' => $data->zprava_id,
+        'zprava' => $data->zprava,
+        'zprava_typ_id' => 1,
     ];
-    $db->insert('temata_slajdy_bullets', $data)->execute();
+
+    $db->insert('zpravy', $data)->execute();
     $data['id'] = $db->getInsertId();
     http_response_code(201);
     header('Content-Type: application/json');
     echo json_encode($data);
 } else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    // UPDATE
-    $db->update('temata_slajdy_bullets', [
-        'class_name' => $data->class_name,
-        'obsah' => $data->obsah,
-    ])->where('id = ?', $data->id)->execute();
+    $db->update('zpravy', (array) $data)->where('id = %u', $data->id)->execute();
     http_response_code(204);
 } else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    // DELETE
-    $odstavec_id = $_GET['id'];
-
-    $db->delete('temata_slajdy_bullets')->where('id = ?', $odstavec_id)->execute();
+    $db->delete('zpravy')->where('id = %u', $_GET['id'])->execute();
     http_response_code(204);
 } else {
     // INVALID METHOD

@@ -6,7 +6,7 @@ use Dibi\Connection;
 
 ini_set('display_errors', 'off');
 
-define("JWT_KEY", "e%Lfd!1ttcUK%6wfOCu%AskBitE&4sS1%S@^t^UhTUfFeLo*3l");
+define("JWT_KEY", "ywmuLkf1JqjPUPTBFLZK1ko4ogtNKgY4DO6qH1wO6fP0QHj4sn");
 
 function handleError() {
   
@@ -36,7 +36,7 @@ function checkAuth() {
 }
 
 function getSubordinates($db, $userId) {
-  $ids = $db->select('id')->from('osoba')->where('osoba_id = %u AND role IS NOT NULL', $userId)->fetchPairs(null, 'id');
+  $ids = $db->select('id')->from('osoby')->where('osoba_id = %u AND role IS NOT NULL', $userId)->fetchPairs(null, 'id');
   $subordinates = [ $userId ];
   foreach ($ids as $id) {
       $subordinates = array_merge($subordinates, getSubordinates($db, $id));
@@ -47,7 +47,7 @@ function getSubordinates($db, $userId) {
 function getSuperiors($db, $id) {
   $superiors = [];
   while ($id != null) {
-      $id = $db->select('osoba_id')->from('osoba')->where('id = %u', $id)->fetchSingle();
+      $id = $db->select('osoba_id')->from('osoby')->where('id = %u', $id)->fetchSingle();
       if ($id != null) {
           $superiors[] = $id;
       }
@@ -60,7 +60,7 @@ function getSuperiors($db, $id) {
 
 $db = new Connection([
   'driver' => 'sqlite3',
-  'database' => 'networking.db',
+  'database' => 'networking_v2.db',
 ]);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'PUT') {

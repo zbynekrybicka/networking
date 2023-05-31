@@ -7,31 +7,28 @@ export default createStore({
     authenticationData: null,
     loading: false,
     data: null,
-    kontakt: null,
     success: false,
   },
   getters: {
-    kontakt(state) {
-      return state.kontakt
+    chatbotByScenar: (state) => (id) => {
+      const chatbotZprava = state.data.zpravy_chatboti.find(zc => zc.zprava_id === id)
+      if (!chatbotZprava) {
+        return null
+      }
+      return state.data.chatboti.find(c => c.id === chatbotZprava.chatbot_id)
     },
-    prospekti(state) {
-      return state.data?.prospekti
+    scenare(state) {
+      return state.data.zpravy_chatboti.map(zc => ({
+        ...zc,
+        jmeno: state.data.chatboti.find(c => c.id === zc.chatbot_id).jmeno,
+        zprava: state.data.zpravy.find(z => z.id === zc.zprava_id).zprava
+      }))
     },
-    temata(state) {
-      return state.data?.temata || []
+    zpravy(state) {
+      return state.data.zpravy
     },
-    temaById: (state) => (id) => {
-      return state.data?.temata.find(tema => tema.id === id)
-    },
-    slajdyById: (state) => (id) => {
-      return state.data?.slajdy.filter(s => s.tema_id === id)
-    },
-    bulletsByTemaId: (state) => (id) => {
-      const slajdyId = state.data?.slajdy.filter(s => s.tema_id === id).map(s => s.id)
-      return state.data?.bullets.filter(b => slajdyId.some(id => id === b.slajd_id))
-    },
-    bulletsBySlajdId: (state) => (id) => {
-      return state.data?.bullets.filter(b => b.slajd_id === id)
+    chatboti(state) {
+      return state.data.chatboti
     },
     loading(state) {
       return state.loading
@@ -47,9 +44,23 @@ export default createStore({
     },
   },
   mutations: {
-    deleteTema(state, id) {
-      const index = state.data.temata.findIndex(t => t.id === id)
-      state.data.temata.splice(index, 1)
+    putZpravyChatboti(state, data) {
+      const zpravaChatbot = state.data.zpravy_chatboti.find(zc => zc.zprava_id === data.zprava_id)
+      zpravaChatbot.titulek = data.titulek
+    },
+    putZpravy(state, data) {
+
+    },
+    postZpravyChatboti(state, data) {
+      state.data.zpravy.push(data.zpravy)
+      state.data.zpravy_chatboti.push(data.zpravy_chatboti)
+    },
+    deleteZpravy(state, id) {
+      const index = state.data.zpravy.findIndex(z => z.id === id)
+      state.data.zpravy.splice(index, 1)
+    },
+    postZpravy(state, zprava) {
+      state.data.zpravy.push(zprava)
     },
     setLoading(state, isLoading) {
       state.loading = isLoading
@@ -65,92 +76,99 @@ export default createStore({
     },
     setAuthToken(state, authToken) {
       state.authToken = authToken
-      localStorage.setItem('networking-authToken', authToken)
+      localStorage.setItem('networking_v2-authToken', authToken)
     },
-    setAll(state, data) {
+    getAll(state, data) {
       state.data = data
     },
     logout(state) {
       state.authToken = null
       state.data = null
-      localStorage.removeItem('networking-authToken')
-    },
-
-    addTema(state, data) {
-      state.data.temata.push(data)
-    },
-    updateTema(state, data) {
-      const tema = state.data.temata.find(x => x.id === data.id)
-      if (tema) {
-        tema.tema = data.tema
-        tema.popis = data.popis
-        tema.video = data.video
-        tema.reel = data.reel
-      }
-    },
-
-    addSlajd(state, data) {
-      state.data.slajdy.push(data)
-    },
-    
-    updateSlajd(state, data) {
-      const slajd = state.data.slajdy.find(o => o.id === data.id)
-      if (slajd) {
-        slajd.nadpis = data.nadpis
-        slajd.video = data.video
-      }
-    },
-    
-    removeSlajd(state, slajdId) {
-      const index = state.data.slajdy.findIndex(o => o.id === slajdId)
-      if (index !== -1) {
-        state.data.slajdy.splice(index, 1)
-      }
-    },
-
-    addBullet(state, data) {
-      state.data.bullets.push(data)
-    },
-
-    updateBullet(state, data) {
-      const bullet = state.data.bullets.find(b => b.id === data.id)
-      if (bullet) {
-        bullet.class_name = data.class_name
-        bullet.obsah = data.obsah
-      }
-    },
-    removeBullet(state, bulletId) {
-      const index = state.data.bullets.findIndex(b => b.id === bulletId)
-      if (index !== -1) {
-        state.data.bullets.splice(index, 1)
-      }
-    },
-
-    nacistKontakt(state, kontakt) {
-      state.kontakt = kontakt
+      localStorage.removeItem('networking_v2-authToken')
     },
   },
   actions: {
-    nacistKontakt({commit, state }, id) {
+    postZpravyChatboti({ commit, state }, chatbot_id) {
       commit('setLoading', true)
-      commit("nacistKontakt", null)
       return axios
-        .get(window.API_URL + '/osoby/' + id, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(response => {
-          commit("nacistKontakt", response.data)
+        .post(window.API_URL + '/zpravy-chatboti', { chatbot_id }, { headers: { Authorization: `Bearer ${state.authToken}`} })
+        .then((response) => {
+          commit('postZpravyChatboti', response.data)
           commit("success")
+          return response.data.zpravy.id
         })
         .catch((error) => {
           console.error(error)
-          commit("setError", error.response.data)
+          alert(error.response.data)
         })
         .finally(() => {
           commit('setLoading', false)
         })
     },
-
+    putZpravyChatboti({ commit, state }, { chatbot_id, zprava_id, titulek }) {
+      commit('setLoading', true)
+      return axios
+        .put(window.API_URL + '/zpravy-chatboti', { chatbot_id, zprava_id, titulek }, { headers: { Authorization: `Bearer ${state.authToken}`} })
+        .then(() => {
+          commit("putZpravyChatboti", { chatbot_id, zprava_id, titulek })
+          commit("success")
+        })
+        .catch((error) => {
+          console.error(error)
+          alert(error.response.data)
+        })
+        .finally(() => {
+          commit('setLoading', false)
+        })
+    },
+    deleteZpravy({ commit, state }, zprava) {
+      commit('setLoading', true)
+      return axios
+        .delete(window.API_URL + '/zpravy/' + zprava.id, { headers: { Authorization: `Bearer ${state.authToken}`} })
+        .then(() => {
+          commit('deleteZpravy', zprava.id)
+          commit("success")
+        })
+        .catch((error) => {
+          console.error(error)
+          alert(error.response.data)
+        })
+        .finally(() => {
+          commit('setLoading', false)
+        })
+    },
+    putZpravy({ commit, state }, data) {
+      commit('setLoading', true)
+      return axios
+        .put(window.API_URL + '/zpravy', data, { headers: { Authorization: `Bearer ${state.authToken}`} })
+        .then(() => {
+          commit("putZpravy", data)
+          commit("success")
+        })
+        .catch((error) => {
+          console.error(error)
+          alert(error.response.data)
+        })
+        .finally(() => {
+          commit('setLoading', false)
+        })
+    },
+    postZpravy({ commit, state }, data) {
+      commit('setLoading', true)
+      return axios
+        .post(window.API_URL + '/zpravy', data, { headers: { Authorization: `Bearer ${state.authToken}`} })
+        .then((response) => {
+          commit('postZpravy', response.data)
+          commit("success")
+        })
+        .catch((error) => {
+          console.error(error)
+          alert(error.response.data)
+        })
+        .finally(() => {
+          commit('setLoading', false)
+        })
+    },
     login({ commit }, { email, password }) {
       commit('setLoading', true)
       return axios
@@ -167,7 +185,6 @@ export default createStore({
           commit('setLoading', false)
         })
     },
-
     authenticate({ commit, dispatch, state }, code) {
       commit('setLoading', true)
       return axios
@@ -185,15 +202,13 @@ export default createStore({
           commit('setLoading', false)
         })
     },
-
     loadAuthToken({ commit, dispatch }) {
-      const authToken = localStorage.getItem('networking-authToken')
+      const authToken = localStorage.getItem('networking_v2-authToken')
       if (authToken) {
         commit('setAuthToken', authToken)
         dispatch('loadAll')
       }
     },
-
     loadAll({ commit, state }) {
       commit('setLoading', true)
       return axios
@@ -203,7 +218,7 @@ export default createStore({
           },
         })
         .then((response) => {
-          commit('setAll', response.data)
+          commit('getAll', response.data)
           commit("success")
         })
         .catch((error) => {
@@ -214,181 +229,6 @@ export default createStore({
           commit('setLoading', false)
         })
     },
-
-    createTema({ commit, state }, tema) {
-      commit('setLoading', true)
-      return axios
-        .post(window.API_URL + '/temata', { tema }, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then((response) => {
-          commit("addTema", response.data)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-    saveTema({ commit, state }, tema) {
-      commit('setLoading', true)
-      return axios
-        .put(window.API_URL + '/temata', tema, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("updateTema", tema)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-
-    deleteTema({ commit, state }, id) {
-      commit('setLoading', true)
-      return axios
-        .delete(window.API_URL + '/temata/' + id, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("deleteTema", id)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-
-    createSlajd({ commit, state }, slajd) {
-      commit('setLoading', true)
-      return axios
-        .post(window.API_URL + '/odstavce', slajd, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then((response) => {
-          commit("addSlajd", response.data)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-    saveSlajd({ commit, state }, slajd) {
-      commit('setLoading', true)
-      return axios
-        .put(window.API_URL + '/odstavce', slajd, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("updateSlajd", slajd)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-    deleteSlajd({ commit, state }, id) {
-      commit('setLoading', true)
-      return axios
-        .delete(window.API_URL + '/odstavce/' + id, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("success")
-          commit("removeSlajd", id)
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-
-    createBullet({ commit, state }, bullet) {
-      commit('setLoading', true)
-      return axios
-        .post(window.API_URL + '/bullets', bullet, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then((response) => {
-          commit("addBullet", response.data)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-    updateBullet({ commit, state }, bullet) {
-      commit('setLoading', true)
-      return axios
-        .put(window.API_URL + '/bullets', bullet, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("updateBullet", bullet)
-          commit("success")
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    },
-    
-    deleteBullet({ commit, state }, bullet) {
-      commit('setLoading', true)
-      return axios
-        .delete(window.API_URL + '/bullets/' + bullet.id, {
-          headers: { Authorization: `Bearer ${state.authToken}` }
-        })
-        .then(() => {
-          commit("success")
-          commit("removeBullet", bullet.id)
-        })
-        .catch((error) => {
-          console.error(error)
-          commit("setError", error.response.data)
-        })
-        .finally(() => {
-          commit('setLoading', false)
-        })
-    }
-    
-
   },
   modules: {
   }
